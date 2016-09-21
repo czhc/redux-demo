@@ -2,6 +2,7 @@ import { applyMiddleware, combineReducers, createStore } from 'redux'
 import logger from 'redux-logger'
 import axios from 'axios'
 import thunk from 'redux-thunk'
+import promise from 'redux-promise-middleware'
 
 axios.defaults.baseURL = 'http://api-oauth.dev/'
 axios.defaults.headers.common['Authorization'] = 'Bearer 850357648e9b95b505a64e53da5d25f4ab5d227be6a881a456885e55ca096199'
@@ -18,15 +19,15 @@ const initialState = {
 
 const basicReducer = (state=initialState, action) => {
   switch (action.type) {
-    case 'FETCH_USERS_START': {
+    case 'FETCH_USERS_PENDING': {
       return { ...state, fetching: true}
       break;
     }
-    case 'FETCH_USERS_ERROR': {
+    case 'FETCH_USERS_REJECTED': {
       return { ...state, fetching: false, error: action.payload}
       break;
     }
-    case 'RECEIVE_USERS': {
+    case 'FETCH_USERS_FULFILLED': {
       return {
         ...state,
         fetching: false,
@@ -80,23 +81,34 @@ const basicReducer = (state=initialState, action) => {
 //   }
 // }
 
-const middleware = applyMiddleware(thunk, logger());
+const middleware = applyMiddleware(promise(), thunk, logger());
 const store = createStore(basicReducer , middleware);
 
 store.subscribe(() => {
   console.log('store changed', store.getState());
 })
 
-store.dispatch((dispatch) => {
-  dispatch({ type: 'FETCH_USERS_START'})
-  axios.get("/api/v1/users")
-    .then((response)=>{
-      dispatch({ type: 'RECEIVE_USERS', payload: response.data})
-    })
-    .catch((err) => {
-      dispatch({ type: 'FETCH_USERS_ERROR', payload: err})
-    })
+store.dispatch({
+  type: 'FETCH_USERS',
+  payload: axios.get("/api/v1/users")
+            // .then((response)=>{
+            //   dispatch({ type: 'RECEIVE_USERS', payload: response.data})
+            // })
+            // .catch((err) => {
+            //   dispatch({ type: 'FETCH_USERS_ERROR', payload: err})
+            // })
 })
+
+//   (dispatch) => {
+//   dispatch({ type: 'FETCH_USERS_START'})
+//   axios.get("/api/v1/users")
+//     .then((response)=>{
+//       dispatch({ type: 'RECEIVE_USERS', payload: response.data})
+//     })
+//     .catch((err) => {
+//       dispatch({ type: 'FETCH_USERS_ERROR', payload: err})
+//     })
+// })
 // store.dispatch({ type: "CHANGE_NAME", payload: 'Will'})
 // store.dispatch({ type: "CHANGE_AGE", payload: 35})
 // store.dispatch({ type: "CHANGE_AGE", payload: 36})
