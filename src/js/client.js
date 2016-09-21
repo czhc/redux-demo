@@ -25,7 +25,9 @@ const reducers = combineReducers({
 })
 
 const store = createStore(reducers);
+const initialReducers = { user: undefined, tweets: undefined }
 
+const store = createStore(reducers, initialReducers);
 store.subscribe(() => {
   console.log('store changed', store.getState());
 })
